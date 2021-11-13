@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <script>
+        let exMode = "composition"
+        let studentData = {}
+
+        function onModeChanged(event){
+            console.log(event)
+            exMode = event
+        }
+
+        setInterval(()=>
+            fetch("http://localhost:5000/getstatus", {
+                method: "GET",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                data: JSON.stringify({
+                    title: "studentdata",
+                    userId: 1,
+                }),
+            })
+            .then((response) => {
+                console.log(response)
+                return response.json()
+            })
+            .then((myData)=>{
+
+                let elFacebox = document.querySelector("#facebox")
+                let elPose = document.querySelector("#pose")
+                let elJudgementBox = document.querySelector("#judgementBox")
+                let elName = document.querySelector("#name")
+                let elScreen = document.querySelector("#screen");
+
+                elFacebox.setAttribute("display","none")
+                elPose.setAttribute("display", "none")
+                elJudgementBox.setAttribute("display", "none")
+
+                console.log(JSON.stringify(myData))
+                name = myData.name
+                studentData.name = name
+                elName.textContent = name
+
+                //data = myData.replaceAll("\'", "\"")
+                ///data = JSON.parse(data)
+                let data = myData
+                studentData = myData
+                //if(Object.keys(data).length == 0)
+                //    data = {width:0, height:0, x:0,y:0,w:0,h:0,posx:0,posy:0}
+
+                width = parseInt(data.width)
+                height = parseInt(data.height)
+                if(exMode === "simple"){
+                    elScreen.setAttribute("width", "100%");//data.width);
+                    elScreen.setAttribute("height", "100px");// data.height);
+                }
+                else {
+                    elScreen.setAttribute("width", "100%");//data.width);
+                    elScreen.setAttribute("height", "100%");// data.height);
+                }
+
+                if(exMode === "composition" || exMode === "simple")
+                {
+                    elJudgementBox.setAttribute("display","inline");
+                    let elJudgement = document.querySelector("#judgement");
+                    let judgement = studentData.attitude
+
+                    sizePercentH = Math.abs(parseInt(data.w))/Math.abs(parseInt(data.width)) * 100
+                    sizePercentW = Math.abs(parseInt(data.h))/Math.abs(parseInt(data.height)) * 100
+
+                    let ATTITUDE_NAME = [
+                        "OUT OF CLASS",
+                        "PRESENT",
+                        "CONCENTRATING",
+                        "PARTICIPATING"
+                    ];
+                    let ATTITUDE_COLOR = [
+                        "red", "brown", "lightblue","lawngreen"
+                    ]
+                    //elJudgement.textContent = (judgement && judgement)? "Good attitude" : "Bad attitude"
+                    elJudgement.textContent = ATTITUDE_NAME[judgement];
+                    elJudgement.style.stroke = ATTITUDE_COLOR[judgement];
+                    elJudgement.style.fill = ATTITUDE_COLOR[judgement];
+                }
+                ///////////////////////////////////////////////////////
+                // draw face
+                if(exMode === "composition" || exMode === "face")
+                {
+                    elFacebox.setAttribute("display","inline");
+                    w = data.w / width * 100
+                    h = data.h / height * 100                
+                    let elFace = document.querySelector("#face")
+                    if(data.x != '0' && data.y != '0') {
+                        xx = ( width - data.x - data.w)/width * 100
+                        yy = ( data.y )/height * 100
+                        
+                        elFace.setAttribute("visibility","visible")
+                        elFace.setAttribute("x", xx  + "%")
+                        elFace.setAttribute("y",yy  + "%")
+                        elFace.setAttribute("height", w+"%")
+                        elFace.setAttribute("width", h+"%")
+                        elFace.setAttribute("fill", "lightgreen")
+                    }
+                    else if(data.x == '0' || data.y == '0') {
+                        elFace.setAttribute("visibility","hidden")
+                    }
+                }
+                /////////////////////////////////////////////////////
+                /////////////////////////////////////////////////////
+                // draw pose                
+                if(exMode === "composition" || exMode === "pose")
+                {
+                    elPose.setAttribute("display","inline");
+
+                    let elPoseXV = document.querySelector("#posexValue");
+                    let elPoseYV = document.querySelector("#poseyValue");
+                    //let elPoseZV = document.querySelector("#posezValue");
+
+                    let posbf = data.bf //parseInt(data.posx, 10)
+                    let poslr = data.lr //parseInt(data.posy, 10)
+                    //let posz = parseInt(data.posz, 10)
+
+                    let elPosex = document.querySelector("#posex");
+                    let elPosey = document.querySelector("#posey");
+                    //let posez = document.querySelector("#posez");
+
+                    elPosex.style.transformOrigin = "80% 20%";
+                    elPosex.style.transform = `rotate(${90-posbf}deg)`
+                    elPosey.style.transformOrigin = "80% 60%";
+                    elPosey.style.transform = `rotate(${90-poslr}deg)`
+                    //posez.style.transformOrigin = "80% 80%";
+                    //posez.style.transform = `rotate(${90-posz}deg)`
+                    
+                    elPosex.setAttribute('x1', 'calc(80%)');
+                    elPosex.setAttribute('y1', 'calc(10%)');
+                    elPosex.setAttribute('x2', 'calc(80%)');
+                    elPosex.setAttribute('y2', 'calc(30%)');
+                    elPoseXV.setAttribute("x", "calc(80%)")
+                    elPoseXV.setAttribute("y", "calc(10%)")
+                    elPoseXV.textContent = "BF:"+data.bf+"°";
+
+                    elPosey.setAttribute('x1', 'calc(80%)');
+                    elPosey.setAttribute('y1', 'calc(50%)');
+                    elPosey.setAttribute('x2', 'calc(80%)');
+                    elPosey.setAttribute('y2', 'calc(70%)');
+                    elPoseYV.setAttribute("x", "calc(80%)")                    
+                    elPoseYV.setAttribute("y", "calc(50%)")
+                    elPoseYV.textContent = "LR:"+data.lr+"°";
+                    
+                    /*
+                    posez.setAttribute('x1', 'calc(80%)');
+                    posez.setAttribute('y1', 'calc(70%)');
+                    posez.setAttribute('x2', 'calc(80%)');
+                    posez.setAttribute('y2', 'calc(90%)');
+                    elPoseZV.setAttribute("x", "calc(80%)")                    
+                    elPoseZV.setAttribute("y", "calc(70%)")
+                    elPoseZV.textContent = "Z:"+data.posz+"°";
+                    */
+                }
+                ////////////////////////////////////////////////////
+
+                ///////////////////////////////////////////////////
+                // draw center line                
+                if(exMode === "composition" || exMode === "face")
+                {
+                    let horzLine = document.querySelector("#horz_line");
+                    let vertLine = document.querySelector("#vert_line");
+                    horzLine.setAttribute('x1', "5%")
+                    horzLine.setAttribute('y1', "50%")//height/2)
+                    horzLine.setAttribute('x2', "95%")//width)
+                    horzLine.setAttribute('y2', "50%")//height/2)
+
+                    vertLine.setAttribute('x1', "50%")
+                    vertLine.setAttribute('y1', "1%")
+                    vertLine.setAttribute('x2', "50%")
+                    vertLine.setAttribute('y2', "99%")
+                }
+                //////////////////////////////////////////////////
+
+                let elScore = document.querySelector("#score");
+                let scoreLength = data.score / 60 * 100 ;
+
+                elScore.setAttribute('x1', "1px")
+                elScore.setAttribute('y1', "1px")//height/2)
+                elScore.setAttribute('x2', `calc(${scoreLength}%)`) //width)
+                elScore.setAttribute('y2', "1px")//height/2)
+          }), 200)
+
+          function onToggleRecording(event){
+            console.log("recording", event.target.checked)
+            let cmd = event.target.checked? "start":"stop"
+
+            fetch("http://localhost:5000/record/"+cmd, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                data: JSON.stringify({
+                    command: "record"
+                }),
+            })
+            .then((response) => {
+                //console.log(response)
+                //return response.json()
+            })
+            
+          }
+    </script>    
+    <h1>Student Attitude Data</h1>
+    <div clss="container">
+        <div class="modebox">
+            <div id="devchoice">
+                <form id="mode">
+                    <input name="devchoice" type="radio" id="facemode" value="face" onchange="onModeChanged('face')">
+                    <label for="facemode">Face Mode</label>
+                    <input name="devchoice" type="radio" id="posemode" value="pose" onchange="onModeChanged('pose')">
+                    <label for="posemode">Pose Mode</label>
+                    <input name="devchoice" type="radio" id="compositionmode" checked=true value="composite" onchange="onModeChanged('composition')">
+                    <label for="compositionmode">Compsition Mode</label>
+                    <input name="devchoice" type="radio" id="simplemode" value="simple" onchange="onModeChanged('simple')">
+                    <label for="simplemode">Simple Mode</label>
+                </form>
+                <form >
+                </br>
+                    <input type="checkbox" id="recordToggle" onchange="onToggleRecording(event)">
+                    <label for="recordToggle">Recording Attitude</label>
+                </form>
+            </div>
+        </div>
+    </div>
+    <div class="teacherview">
+
+    </div>
+    <div class="statusbox">
+        <svg width="640px" height="480px">
+            <rect id="screen" visibility = "hidden" fill="rgb(255,200,200)" width="100%", height="100%"/>
+            <g id="facebox" display="inline">
+                <rect id = "face" fill="yellow" opacity="0.7"/>                        
+                <text id="facexValue"></text>
+                <text id="faceyValue"></text>
+                <line id="horz_line" x1="0" y1="0" x2="0" y2="0" stroke="red" style="stroke-width:2"></line>
+                <line id="vert_line" x1="0" y1="0" x2="0" y2="0" stroke="blue" style="stroke-width:2"></line>
+            </g>
+            <!--<polygon points="120,0 240,225 -10,225" fill="green"/>-->
+            <text id = "name" x="30" y="40" font-family="Verdana" font-size="25"
+                fill="white" stroke="black" stroke-width="2" >
+                No data
+            </text>
+            <g id="judgementBox" display="inline">
+                <text id = "judgement" x="30" y="70" font-family="Verdana" font-size="30"
+                    fill="white" stroke="black" stroke-width="2" >
+                </text>
+            </g>
+            <g id="pose" >
+                <line id="posex" stroke="blue" > </line>
+                <line id="posey" stroke="blue" > </line>
+                <line id="posez" stroke="blue" > </line>
+                <text id="posexValue" font-family="Verdana" stroke="black" fill="black" font-size="15"></text>
+                <text id="poseyValue" font-family="Verdana" stroke="black" fill="black" font-size="15"></text>
+                <text id="posezValue" font-family="Verdana" stroke="black" fill="black" font-size="15"></text>
+            </g>
+            
+            <g id="scoregroup" >
+                <line id="scorebase" x1="0" y1="0" x2="100%" y2="0" stroke="gray" stroke-width="15"> </line>         
+                <line id="score" stroke="blue" stroke-width="15"> </line>                
+            </g>
+        </svg>
+    </div>
+</body>
+</html>
